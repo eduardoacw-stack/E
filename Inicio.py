@@ -1,6 +1,6 @@
 import subprocess
 
-PAQUETE = com.cainiao.cs.global.es
+PAQUETE = "com.cainiao.cs.global.es"
 ACTIVIDAD = ".MainActivity"  # cambia según tu app
 
 def abrir_app(paquete, actividad):
