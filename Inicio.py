@@ -1,7 +1,7 @@
 import subprocess
 
 # Nombre del paquete de la app que quieres abrir
-PAQUETE = " com.cainiao.cs.global.es"
+PAQUETE = com.cainiao.cs.global.es
 
 def abrir_app(paquete):
     try:
