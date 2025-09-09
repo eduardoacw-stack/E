@@ -8,7 +8,7 @@ def load_palabras(path):
         with open(path, encoding="utf-8") as f:
             for line in f:
                 line = line.strip()
-                if not line or line.startswith("#"):  # ignorar comentarios y vacías
+                if not line or line.startswith("#"):
                     continue
                 palabras.append(line)
     return palabras
@@ -16,18 +16,14 @@ def load_palabras(path):
 def limpiar_texto(texto, palabras):
     lineas_limpias = []
     for linea in texto.splitlines():
-        # si alguna palabra prohibida está en la línea, se salta
         if any(p in linea for p in palabras):
             continue
         lineas_limpias.append(linea)
     return "\n".join(lineas_limpias)
 
 def main():
-    # 📂 Carpeta de entrada
+    # 📂 Carpeta compartida "paradas"
     carpeta = Path.home() / "storage/shared/paradas"
-    # 📂 Carpeta de salida
-    output_dir = Path(__file__).parent / "output"
-    output_dir.mkdir(exist_ok=True)
 
     # 📅 Archivo de hoy
     fecha = datetime.now().strftime("%d-%m")
@@ -49,8 +45,8 @@ def main():
     # Limpiar texto
     texto_limpio = limpiar_texto(texto, palabras)
 
-    # Guardar archivo limpio en /output
-    archivo_salida = output_dir / f"{fecha}.txt"
+    # Guardar archivo limpio en la misma carpeta con sufijo "_clean"
+    archivo_salida = carpeta / f"{fecha}_clean.txt"
     archivo_salida.write_text(texto_limpio, encoding="utf-8")
 
     print(f"✅ Archivo limpio guardado en: {archivo_salida}")
