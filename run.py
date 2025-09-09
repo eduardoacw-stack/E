@@ -14,38 +14,34 @@ def normalize_text(s: str) -> str:
     return s.casefold()
 
 def load_palabras(path: Path):
-    """Carga la lista de palabras/patrones desde config/palabras.txt.
-       Devuelve (raw_list, compiled_regex_list)."""
-    raws = []
-    regexes = []
-    if not path.exists():
-        return raws, regexes
+    """Carga la lista de palabras desde palabras.txt."""
+    palabras = []
+    if path.exists():
+        txt = path.read_text(encoding='utf-8', errors='ignore')
+        for line in txt.splitlines():
+            line = line.strip()
+            if line and not line.startswith('#'):
+                palabras.append(line)
+    return palabras
 
-    txt = path.read_text(encoding='utf-8', errors='ignore')
-    for line in txt.splitlines():
-        line = line.strip()
-        if not line or line.startswith('#'):
-            continue
-        raws.append(line)
-        if line.startswith('re:'):
-            pat = line[3:].strip()
-            # Normalizamos la expresión para comparar sobre texto normalizado.
-            pat_norm = normalize_text(pat)
-            try:
-                regexes.append(re.compile(pat_norm))
-            except re.error:
-                # Si la regex está mal, compilamos como literal
-                regexes.append(re.compile(re.escape(pat_norm)))
-        else:
-            # coincidencia literal (normalizada)
-            pat_norm = re.escape(normalize_text(line))
-            regexes.append(re.compile(pat_norm))
-    return raws, regexes
+def limpiar_texto(texto: str, palabras: list):
+    """Elimina las palabras de cada línea sin borrar la línea completa."""
+    lineas_limpias = []
+    removed_count = 0
+    for linea in texto.splitlines():
+        nueva_linea = linea
+        for p in palabras:
+            # reemplazo insensible a mayúsculas y acentos
+            pattern = re.compile(re.escape(p), flags=re.IGNORECASE)
+            nueva_linea, n = pattern.subn('', nueva_linea)
+            removed_count += n
+        lineas_limpias.append(nueva_linea.strip())  # quitamos espacios sobrantes
+    return "\n".join(lineas_limpias), removed_count
 
 def main():
-    ap = argparse.ArgumentParser(description="Limpia líneas del archivo diario según config/palabras.txt")
+    ap = argparse.ArgumentParser(description="Limpia palabras del archivo diario")
     ap.add_argument('--date', help='Forzar fecha dd-mm (por defecto hoy)')
-    ap.add_argument('--debug', action='store_true', help='Muestra información adicional de depuración')
+    ap.add_argument('--debug', action='store_true', help='Muestra información de depuración')
     args = ap.parse_args()
 
     carpeta = Path.home() / "storage" / "shared" / "paradas"
@@ -57,44 +53,21 @@ def main():
         print(f"⚠️ No se encontró archivo: {archivo_hoy}")
         sys.exit(1)
 
-    raws, regexes = load_palabras(palabras_file)
-    if args.debug:
-        print("📂 Archivo leído:", archivo_hoy)
-        print("📄 palabras (crudas):")
-        for r in raws:
-            print("  -", r)
-        print("🔎 patrones compilados:", len(regexes))
-
+    palabras = load_palabras(palabras_file)
     texto = archivo_hoy.read_text(encoding='utf-8', errors='ignore')
-    lines = texto.splitlines()
 
-    kept = []
-    removed = 0
-    hits = []  # ejemplos de líneas eliminadas
-
-    for i, line in enumerate(lines, start=1):
-        norm_line = normalize_text(line)
-        matched = False
-        for idx, regex in enumerate(regexes):
-            if regex.search(norm_line):
-                matched = True
-                removed += 1
-                if args.debug and len(hits) < 50:
-                    hits.append((i, line, raws[idx] if idx < len(raws) else "<patron desconocido>"))
-                break
-        if not matched:
-            kept.append(line)
+    texto_limpio, removed_count = limpiar_texto(texto, palabras)
 
     archivo_salida = carpeta / f"{fecha}_clean.txt"
-    archivo_salida.write_text("\n".join(kept), encoding='utf-8')
+    archivo_salida.write_text(texto_limpio, encoding='utf-8')
 
     print(f"✅ Guardado: {archivo_salida}")
-    print(f"ℹ️  Líneas leídas: {len(lines)}  — Eliminadas: {removed}  — Resultado: {len(kept)}")
+    print(f"ℹ️  Palabras eliminadas: {removed_count}")
 
-    if args.debug and hits:
-        print("\nEjemplos de líneas eliminadas (línea, patrón, contenido):")
-        for ln, contenido, patron in hits[:20]:
-            print(f"{ln:4d}  |  {patron}  |  {contenido}")
+    if args.debug:
+        print("--- Lista de palabras aplicadas ---")
+        for p in palabras:
+            print("-", p)
 
 if __name__ == "__main__":
     main()
