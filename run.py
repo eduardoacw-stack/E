@@ -38,7 +38,7 @@ def main():
     palabras = load_palabras(palabras_file)
 
     print("\n--- Texto original (primeras 15 líneas) ---")
-    for linea in texto.splitlines()[:15]:
+    for linea in texto.splitlines()[:30]:
         print(linea)
 
     print("\n--- Palabras cargadas ---")
