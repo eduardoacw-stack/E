@@ -1,55 +1,100 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 from pathlib import Path
 from datetime import datetime
+import unicodedata
+import re
+import argparse
+import sys
 
-def load_palabras(path):
-    palabras = []
-    if path.exists():
-        with open(path, encoding="utf-8") as f:
-            for line in f:
-                line = line.strip()
-                if not line or line.startswith("#"):
-                    continue
-                palabras.append(line)
-    return palabras
+def normalize_text(s: str) -> str:
+    """Normaliza texto: NFKD, elimina diacríticos y casefold."""
+    s = unicodedata.normalize('NFKD', s)
+    s = ''.join(ch for ch in s if unicodedata.category(ch) != 'Mn')
+    return s.casefold()
 
-def limpiar_texto(texto, palabras):
-    lineas_limpias = []
-    for linea in texto.splitlines():
-        if any(p in linea for p in palabras):
+def load_palabras(path: Path):
+    """Carga la lista de palabras/patrones desde config/palabras.txt.
+       Devuelve (raw_list, compiled_regex_list)."""
+    raws = []
+    regexes = []
+    if not path.exists():
+        return raws, regexes
+
+    txt = path.read_text(encoding='utf-8', errors='ignore')
+    for line in txt.splitlines():
+        line = line.strip()
+        if not line or line.startswith('#'):
             continue
-        lineas_limpias.append(linea)
-    return "\n".join(lineas_limpias)
+        raws.append(line)
+        if line.startswith('re:'):
+            pat = line[3:].strip()
+            # Normalizamos la expresión para comparar sobre texto normalizado.
+            pat_norm = normalize_text(pat)
+            try:
+                regexes.append(re.compile(pat_norm))
+            except re.error:
+                # Si la regex está mal, compilamos como literal
+                regexes.append(re.compile(re.escape(pat_norm)))
+        else:
+            # coincidencia literal (normalizada)
+            pat_norm = re.escape(normalize_text(line))
+            regexes.append(re.compile(pat_norm))
+    return raws, regexes
 
 def main():
-    # 📂 Carpeta compartida "paradas"
-    carpeta = Path.home() / "storage/shared/paradas"
+    ap = argparse.ArgumentParser(description="Limpia líneas del archivo diario según config/palabras.txt")
+    ap.add_argument('--date', help='Forzar fecha dd-mm (por defecto hoy)')
+    ap.add_argument('--debug', action='store_true', help='Muestra información adicional de depuración')
+    args = ap.parse_args()
 
-    # 📅 Archivo de hoy
-    fecha = datetime.now().strftime("%d-%m")
+    carpeta = Path.home() / "storage" / "shared" / "paradas"
+    fecha = args.date if args.date else datetime.now().strftime("%d-%m")
     archivo_hoy = carpeta / f"{fecha}.txt"
-
-    # 📋 Lista de palabras a borrar
-    palabras_file = Path(__file__).parent / "palabras.txt"
+    palabras_file = Path(__file__).parent / "config" / "palabras.txt"
 
     if not archivo_hoy.exists():
-        print(f"⚠️ No se encontró archivo para hoy: {archivo_hoy}")
-        return
+        print(f"⚠️ No se encontró archivo: {archivo_hoy}")
+        sys.exit(1)
 
-    print(f"✅ Archivo encontrado: {archivo_hoy}")
+    raws, regexes = load_palabras(palabras_file)
+    if args.debug:
+        print("📂 Archivo leído:", archivo_hoy)
+        print("📄 palabras (crudas):")
+        for r in raws:
+            print("  -", r)
+        print("🔎 patrones compilados:", len(regexes))
 
-    # Leer texto original
-    texto = archivo_hoy.read_text(encoding="utf-8", errors="ignore")
-    palabras = load_palabras(palabras_file)
+    texto = archivo_hoy.read_text(encoding='utf-8', errors='ignore')
+    lines = texto.splitlines()
 
-    # Limpiar texto
-    texto_limpio = limpiar_texto(texto, palabras)
+    kept = []
+    removed = 0
+    hits = []  # ejemplos de líneas eliminadas
 
-    # Guardar archivo limpio en la misma carpeta con sufijo "_clean"
+    for i, line in enumerate(lines, start=1):
+        norm_line = normalize_text(line)
+        matched = False
+        for idx, regex in enumerate(regexes):
+            if regex.search(norm_line):
+                matched = True
+                removed += 1
+                if args.debug and len(hits) < 50:
+                    hits.append((i, line, raws[idx] if idx < len(raws) else "<patron desconocido>"))
+                break
+        if not matched:
+            kept.append(line)
+
     archivo_salida = carpeta / f"{fecha}_clean.txt"
-    archivo_salida.write_text(texto_limpio, encoding="utf-8")
+    archivo_salida.write_text("\n".join(kept), encoding='utf-8')
 
-    print(f"✅ Archivo limpio guardado en: {archivo_salida}")
+    print(f"✅ Guardado: {archivo_salida}")
+    print(f"ℹ️  Líneas leídas: {len(lines)}  — Eliminadas: {removed}  — Resultado: {len(kept)}")
+
+    if args.debug and hits:
+        print("\nEjemplos de líneas eliminadas (línea, patrón, contenido):")
+        for ln, contenido, patron in hits[:20]:
+            print(f"{ln:4d}  |  {patron}  |  {contenido}")
 
 if __name__ == "__main__":
     main()
