@@ -51,7 +51,7 @@ def main():
     carpeta = Path.home() / "storage" / "shared" / "paradas"
     fecha = args.date if args.date else datetime.now().strftime("%d-%m")
     archivo_hoy = carpeta / f"{fecha}.txt"
-    palabras_file = Path(__file__).parent / "config" / "palabras.txt"
+    palabras_file = Path(__file__).parent / "palabras.txt"
 
     if not archivo_hoy.exists():
         print(f"⚠️ No se encontró archivo: {archivo_hoy}")
