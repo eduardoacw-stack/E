@@ -106,26 +106,30 @@ def parse_record(rec):
     m = POSTAL_RE.match(rec['postal_line'])
     postal = m.group(1) if m else rec['postal_line'].strip()
     content = rec['lines']
-    # buscar tracking desde el final: token alfanum sin espacios y largo >=8
+
+    # buscar tracking desde el final
     tracking_idx = None
     for i in range(len(content)-1, -1, -1):
         token = re.sub(r'\s+', '', content[i])
         if TRACK_RE.match(token):
             tracking_idx = i
             break
+
+    tracking = ''
+    address_lines = []
     if tracking_idx is not None:
         tracking = content[tracking_idx].strip()
+
+        # quitar la línea justo antes del tracking (nombre)
         name_idx = tracking_idx - 1 if tracking_idx >= 1 else None
         if name_idx is not None:
-            # nombre (lo vamos a eliminar)
-            name = content[name_idx].strip()
+            address_lines = content[:name_idx]   # 👈 aquí se descarta el nombre
         else:
-            name = ''
-        address_lines = content[: max(0, name_idx) ] if name_idx is not None else content[:tracking_idx]
+            address_lines = content[:tracking_idx]
     else:
-        tracking = ''
-        name = ''
+        # si no encuentra tracking, toma todo como dirección
         address_lines = content
+
     address = ', '.join([a for a in address_lines if a.strip()])
     return {'postal': postal, 'address': address.strip(), 'tracking': tracking.strip()}
 
