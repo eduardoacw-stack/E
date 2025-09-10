@@ -5,44 +5,34 @@ from datetime import datetime
 import re
 import sys
 
-def load_list(path: Path):
-    """Carga palabras/patrones de un archivo, ignorando comentarios y vacías."""
-    items = []
-    if path.exists():
-        txt = path.read_text(encoding='utf-8', errors='ignore')
-        for line in txt.splitlines():
-            line = line.strip()
-            if line and not line.startswith('#'):
-                items.append(line)
-    return items
+def procesar_bloques(texto: str):
+    lineas = [l.strip() for l in texto.splitlines() if l.strip()]
+    salida = []
+    i = 0
 
-def limpiar_texto(texto, palabras, lineas, indent_words):
-    lineas_limpias = []
-    removed_words = 0
-    removed_lines = 0
+    while i < len(lineas):
+        bloque = lineas[i:i+4]  # tomamos bloques de 4
+        if len(bloque) < 4:
+            break  # si el bloque está incompleto, lo ignoramos
 
-    for linea in texto.splitlines():
-        norm_linea = linea
+        # 1️⃣ primera línea → solo código postal
+        m = re.match(r"(\d{5})", bloque[0])
+        if m:
+            salida.append(m.group(1))
+        else:
+            salida.append(bloque[0])  # si no hay match, dejamos tal cual
 
-        # 1️⃣ Borrar línea completa si contiene alguna palabra de lineas.txt
-        borrar_linea = any(re.search(re.escape(p), norm_linea, re.IGNORECASE) for p in lineas)
-        if borrar_linea:
-            removed_lines += 1
-            continue
+        # 2️⃣ segunda línea → dirección completa
+        salida.append(bloque[1])
 
-        # 2️⃣ Borrar palabras específicas dentro de la línea
-        for p in palabras:
-            pattern = re.compile(re.escape(p), flags=re.IGNORECASE)
-            norm_linea, n = pattern.subn('', norm_linea)
-            removed_words += n
+        # 3️⃣ tercera línea → eliminar (nombre) → no se agrega nada
 
-        # 3️⃣ Agregar indentación si detecta palabras en indent.txt
-        if any(re.search(re.escape(p), norm_linea, re.IGNORECASE) for p in indent_words):
-            norm_linea = "  " + norm_linea  # 2 espacios
+        # 4️⃣ cuarta línea → código de paquete
+        salida.append(bloque[3])
 
-        lineas_limpias.append(norm_linea.strip())
+        i += 4  # saltamos al siguiente bloque
 
-    return "\n".join(lineas_limpias), removed_words, removed_lines
+    return "\n".join(salida)
 
 def main():
     carpeta = Path.home() / "storage" / "shared" / "paradas"
@@ -53,24 +43,13 @@ def main():
         print(f"⚠️ No se encontró archivo: {archivo_hoy}")
         sys.exit(1)
 
-    # Archivos de configuración
-    palabras_file = Path(__file__).parent / "palabras.txt"
-    lineas_file = Path(__file__).parent / "lineas.txt"
-    indent_file = Path(__file__).parent / "indent.txt"
-
-    palabras = load_list(palabras_file)
-    lineas = load_list(lineas_file)
-    indent_words = load_list(indent_file)
-
-    texto = archivo_hoy.read_text(encoding='utf-8', errors='ignore')
-
-    texto_limpio, removed_words, removed_lines = limpiar_texto(texto, palabras, lineas, indent_words)
+    texto = archivo_hoy.read_text(encoding="utf-8", errors="ignore")
+    resultado = procesar_bloques(texto)
 
     archivo_salida = carpeta / f"{fecha}_clean.txt"
-    archivo_salida.write_text(texto_limpio, encoding='utf-8')
+    archivo_salida.write_text(resultado, encoding="utf-8")
 
-    print(f"✅ Guardado: {archivo_salida}")
-    print(f"ℹ️  Palabras eliminadas: {removed_words}  — Líneas eliminadas: {removed_lines}")
+    print(f"✅ Procesado y guardado en {archivo_salida}")
 
 if __name__ == "__main__":
     main()
