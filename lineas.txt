@@ -1,1 +1,5 @@
-
+Asignado
+Nuevos servicios asignados
+Servicios
+Completar
+Fallar
