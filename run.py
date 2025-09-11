@@ -5,8 +5,12 @@ from datetime import datetime
 import re
 import sys
 
-# Expresión para detectar código postal
+# Detectar código postal
 POSTAL_RE = re.compile(r"^(\d{5})")
+# Detectar tracking (números largos)
+TRACKING_RE = re.compile(r"^\d{10,}$")
+# Detectar horarios tipo mon:[...]
+HORARIO_RE = re.compile(r"^(mon|tue|wed|thu|fri|sat|sun):", re.IGNORECASE)
 
 def extraer_postal_direccion(texto: str):
     lineas = [l.strip() for l in texto.splitlines() if l.strip()]
@@ -15,18 +19,29 @@ def extraer_postal_direccion(texto: str):
     while i < len(lineas):
         m = POSTAL_RE.match(lineas[i])
         if m:
-            # 1️⃣ Extraer solo el código postal
             postal = m.group(1)
 
-            # 2️⃣ Dirección = la siguiente línea si existe
-            direccion = lineas[i+1] if i+1 < len(lineas) else ""
+            # Buscar siguiente línea válida como dirección
+            direccion = ""
+            j = i + 1
+            while j < len(lineas):
+                if POSTAL_RE.match(lineas[j]):  # otro postal → no es dirección
+                    break
+                if TRACKING_RE.match(lineas[j]):  # tracking → saltar
+                    j += 1
+                    continue
+                if HORARIO_RE.match(lineas[j]):  # horario → saltar
+                    j += 1
+                    continue
+                # Si pasa los filtros → dirección válida
+                direccion = lineas[j]
+                break
 
-            salida.append(f"{postal} | {direccion}")
+            if direccion:
+                salida.append(f"{postal} | {direccion}")
 
-            # 3️⃣ Avanzar hasta el siguiente código postal
-            i += 2
-            while i < len(lineas) and not POSTAL_RE.match(lineas[i]):
-                i += 1
+            # Avanzar hasta el próximo postal
+            i = j
         else:
             i += 1
 
