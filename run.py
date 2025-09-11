@@ -13,7 +13,12 @@ import argparse
 import sys
 import unicodedata
 import re
-import pandas as pd
+
+try:
+    from openpyxl import Workbook
+except ImportError:
+    print("⚠️ Necesitas instalar openpyxl: pkg install python; pip install openpyxl")
+    sys.exit(1)
 
 
 # ---------------- UTILIDADES ----------------
@@ -24,7 +29,6 @@ def normalizar(texto: str) -> str:
         c for c in unicodedata.normalize('NFD', texto.lower())
         if unicodedata.category(c) != 'Mn'
     )
-
 
 def load_list(path: Path):
     """Carga lista de patrones desde archivo (1 por línea)"""
@@ -90,15 +94,15 @@ def extraer_codigos_y_direcciones(lines):
 
 # ---------------- GENERAR EXCEL ----------------
 def generar_excel(resultado, output_path: Path):
-    data = []
-    for line in resultado:
-        if "|" not in line:
-            continue
-        cp, direccion = line.split("|", 1)
-        data.append({"address line": direccion.strip(), "postcode": cp.strip()})
-
-    df = pd.DataFrame(data, columns=["address line", "postcode"])
-    df.to_excel(output_path.with_suffix(".xlsx"), index=False)
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Direcciones"
+    # encabezado
+    ws.append(["address line", "postcode"])
+    # filas
+    for direccion, cp in resultado:
+        ws.append([direccion, cp])
+    wb.save(output_path.with_suffix(".xlsx"))
     return output_path.with_suffix(".xlsx")
 
 
@@ -128,22 +132,19 @@ def main():
 
     raw_lines = input_path.read_text(encoding="utf-8", errors="ignore").splitlines()
 
-    # Etapa 1: limpieza
+# 1️⃣ Limpieza
     clean_lines, removed_lines, removed_words = limpiar_texto(
         raw_lines, borrar_lineas, borrar_palabras, debug=args.debug
     )
 
-    # Etapa 2: extraer cp + dirección
+    # 2️⃣ Extraer CP + dirección
     resultado = extraer_codigos_y_direcciones(clean_lines)
-
-    # Guardar
-    output_path.write_text("\n".join(resultado), encoding="utf-8")
-
-    print(f"✅ Guardado: {output_path}")
+    clean_txt_path.write_text("\n".join(f"{cp} | {direccion}" for direccion, cp in resultado), encoding="utf-8")
+    print(f"✅ TXT limpio guardado: {clean_txt_path}")
     print(f"ℹ️ Líneas eliminadas: {removed_lines} — Palabras eliminadas: {removed_words}")
     print(f"ℹ️ Bloques extraídos: {len(resultado)}")
 
-# 3️⃣ Generar Excel
+    # 3️⃣ Generar Excel
     excel_path = generar_excel(resultado, clean_txt_path)
     print(f"✅ Excel generado: {excel_path}")
 
