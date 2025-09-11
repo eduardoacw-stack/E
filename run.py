@@ -5,6 +5,7 @@ from datetime import datetime
 import re
 import sys
 
+# Expresión para detectar código postal
 POSTAL_RE = re.compile(r"^(\d{5})")
 
 def extraer_postal_direccion(texto: str):
@@ -14,15 +15,21 @@ def extraer_postal_direccion(texto: str):
     while i < len(lineas):
         m = POSTAL_RE.match(lineas[i])
         if m:
+            # 1️⃣ Extraer solo el código postal
             postal = m.group(1)
+
+            # 2️⃣ Dirección = la siguiente línea si existe
             direccion = lineas[i+1] if i+1 < len(lineas) else ""
+
             salida.append(f"{postal} | {direccion}")
-            # saltar hasta el próximo postal
+
+            # 3️⃣ Avanzar hasta el siguiente código postal
             i += 2
             while i < len(lineas) and not POSTAL_RE.match(lineas[i]):
                 i += 1
         else:
             i += 1
+
     return "\n".join(salida)
 
 def main():
