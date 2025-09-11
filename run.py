@@ -11,19 +11,18 @@ def extraer_postal_direccion(texto: str):
     lineas = [l.strip() for l in texto.splitlines() if l.strip()]
     salida = []
     i = 0
-
     while i < len(lineas):
-        # ¿es un código postal?
         m = POSTAL_RE.match(lineas[i])
         if m:
-            postal = m.group(1)  # solo los 5 dígitos
-            # dirección = la siguiente línea si existe
+            postal = m.group(1)
             direccion = lineas[i+1] if i+1 < len(lineas) else ""
             salida.append(f"{postal} | {direccion}")
-            i += 2  # saltamos postal + direccion
+            # saltar hasta el próximo postal
+            i += 2
+            while i < len(lineas) and not POSTAL_RE.match(lineas[i]):
+                i += 1
         else:
             i += 1
-
     return "\n".join(salida)
 
 def main():
