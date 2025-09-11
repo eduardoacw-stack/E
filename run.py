@@ -119,8 +119,8 @@ def main():
     carpeta = Path.home() / "storage" / "shared" / "paradas"
     fecha = args.date if args.date else datetime.now().strftime("%d-%m")
 
-    input_path = Path(args.input) if args.input else carpeta / f"{fecha}.txt"
-    output_path = Path(args.output) if args.output else carpeta / f"{fecha}_clean.txt"
+  input_path = Path(args.input) if args.input else carpeta / f"{fecha}.txt"
+clean_txt_path = carpeta / f"{fecha}_clean.txt"
 
     if not input_path.exists():
         print(f"⚠️ No se encontró archivo: {input_path}")
