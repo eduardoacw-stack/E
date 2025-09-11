@@ -13,6 +13,7 @@ import argparse
 import sys
 import unicodedata
 import re
+import pandas as pd
 
 
 # ---------------- UTILIDADES ----------------
@@ -87,6 +88,19 @@ def extraer_codigos_y_direcciones(lines):
             i += 1
     return resultado
 
+# ---------------- GENERAR EXCEL ----------------
+def generar_excel(resultado, output_path: Path):
+    data = []
+    for line in resultado:
+        if "|" not in line:
+            continue
+        cp, direccion = line.split("|", 1)
+        data.append({"address line": direccion.strip(), "postcode": cp.strip()})
+
+    df = pd.DataFrame(data, columns=["address line", "postcode"])
+    df.to_excel(output_path.with_suffix(".xlsx"), index=False)
+    return output_path.with_suffix(".xlsx")
+
 
 # ---------------- MAIN ----------------
 
@@ -129,6 +143,9 @@ def main():
     print(f"ℹ️ Líneas eliminadas: {removed_lines} — Palabras eliminadas: {removed_words}")
     print(f"ℹ️ Bloques extraídos: {len(resultado)}")
 
+# 3️⃣ Generar Excel
+    excel_path = generar_excel(resultado, clean_txt_path)
+    print(f"✅ Excel generado: {excel_path}")
 
 if __name__ == "__main__":
     main()
