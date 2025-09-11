@@ -28,7 +28,6 @@ adosado
 numero
 Pol. Ind. Els Vents
 Cl.
-CI
 Poligono Industrial els Vents
 La Torre de Portacoeli
 
