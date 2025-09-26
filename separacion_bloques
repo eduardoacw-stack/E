@@ -1,3 +1,0 @@
-def main():
-    print("🚀 Iniciando data.py")
-    ejecutar_bloques()
