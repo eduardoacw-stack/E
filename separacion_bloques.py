@@ -36,8 +36,9 @@ if __name__ == "__main__":
     # 📂 Carpeta donde guardas tus archivos
     carpeta = Path.home() / "storage" / "shared" / "paradas"
 
-    # Archivo de entrada (puedes cambiar el nombre aquí)
-    input_path = carpeta / "entrada.txt"
+    # Nombre del archivo de entrada: DD-MM.txt (ejemplo: 26-09.txt)
+    fecha = datetime.now().strftime("%d-%m")
+    input_path = carpeta / f"{fecha}.txt"
 
     if not input_path.exists():
         print(f"⚠️ No se encontró archivo: {input_path}")
@@ -50,8 +51,7 @@ if __name__ == "__main__":
     bloques = separar_bloques(texto)
     print(f"✅ Se detectaron {len(bloques)} bloques.")
 
-    # Crear archivo de salida
-    fecha = datetime.now().strftime("%d-%m")
+    # Crear archivo de salida en la MISMA carpeta
     output_path = carpeta / f"{fecha}_bloques.txt"
 
     with open(output_path, "w", encoding="utf-8") as f:
