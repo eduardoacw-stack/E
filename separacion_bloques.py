@@ -16,8 +16,7 @@ def separar_bloques(texto):
         if not linea:
             continue
 
-        # Detectar código postal (ejemplo: 46119,)
-        if re.match(r"^\d{5},", linea):
+        if re.match(r"^\d{5},", linea):  # Detectar código postal
             if bloque_actual:
                 bloques.append(bloque_actual)
                 bloque_actual = []
@@ -29,11 +28,22 @@ def separar_bloques(texto):
     return bloques
 
 
+def extraer_codigos(bloques):
+    """
+    Devuelve una lista de códigos postales únicos en orden de aparición.
+    """
+    codigos = []
+    for bloque in bloques:
+        primera_linea = bloque[0]
+        m = re.match(r"^(\d{5}),", primera_linea)
+        if m:
+            cp = m.group(1)
+            if cp not in codigos:
+                codigos.append(cp)
+    return codigos
+
+
 def procesar_archivo():
-    """
-    Lee el archivo del día (DD-MM.txt) en la carpeta paradas,
-    separa en bloques y genera un archivo DD-MM_bloques.txt.
-    """
     carpeta = Path.home() / "storage" / "shared" / "paradas"
     fecha = datetime.now().strftime("%d-%m")
     input_path = carpeta / f"{fecha}.txt"
@@ -46,9 +56,30 @@ def procesar_archivo():
     bloques = separar_bloques(texto)
     print(f"✅ Se detectaron {len(bloques)} bloques.")
 
+    # 1️⃣ Obtener códigos postales únicos
+    codigos = extraer_codigos(bloques)
+    print("\n📌 Códigos postales detectados:")
+    for i, cp in enumerate(codigos, 1):
+        print(f"  {i}. {cp}")
+
+    # 2️⃣ Preguntar al usuario
+    seleccion = input("\n👉 Ingresa los códigos postales que quieres mantener (ej: 46118,46180): ")
+    seleccion = [s.strip() for s in seleccion.split(",") if s.strip()]
+
+    # 3️⃣ Filtrar bloques
+    bloques_filtrados = []
+    for bloque in bloques:
+        primera_linea = bloque[0]
+        m = re.match(r"^(\d{5}),", primera_linea)
+        if m and m.group(1) in seleccion:
+            bloques_filtrados.append(bloque)
+
+    print(f"\n✅ Se mantendrán {len(bloques_filtrados)} bloques tras el filtrado.")
+
+    # 4️⃣ Guardar resultado en archivo
     output_path = carpeta / f"{fecha}_bloques.txt"
     with open(output_path, "w", encoding="utf-8") as f:
-        for i, b in enumerate(bloques, 1):
+        for i, b in enumerate(bloques_filtrados, 1):
             f.write(f"=== Bloque {i} ===\n")
             for l in b:
                 f.write(l + "\n")
