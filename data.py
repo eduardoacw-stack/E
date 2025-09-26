@@ -1,8 +1,5 @@
-from separacion_bloques import ejecutar_bloques
+# data.py
 
-def main():
-    print("🚀 Iniciando data.py")
-    ejecutar_bloques()
+import separacion_bloques
 
-if __name__ == "__main__":
-    main()
+print("🚀 Finalizó la ejecución de data.py")
