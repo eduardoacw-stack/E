@@ -1,59 +1,20 @@
-# separacion_bloques.py
 import re
 from pathlib import Path
 from datetime import datetime
 
-def limpiar_codigos_postales(texto: str) -> str:
+
+def limpiar_codigos_postales(lineas):
     """
-    Deja solo el número de los códigos postales (ej: '46119, Naquera' -> '46119').
+    Convierte líneas que empiezan con CP a solo el número (ej: '46119, Naquera' -> '46119').
     """
-    lineas = texto.splitlines()
     nuevas = []
     for ln in lineas:
         m = re.match(r"^(\d{5}),", ln.strip())
         if m:
-            nuevas.append(m.group(1))  # solo el número
+            nuevas.append(m.group(1))
         else:
             nuevas.append(ln)
-    return "\n".join(nuevas)
-
-def separar_bloques(texto):
-    """
-    Recibe texto completo como string.
-    Devuelve lista de bloques, cada bloque es lista de líneas.
-    """
-    bloques = []
-    bloque_actual = []
-
-    for linea in texto.splitlines():
-        linea = linea.strip()
-        if not linea:
-            continue
-
-        if re.match(r"^\d{5},", linea):  # Detectar código postal
-            if bloque_actual:
-                bloques.append(bloque_actual)
-                bloque_actual = []
-        bloque_actual.append(linea)
-
-    if bloque_actual:
-        bloques.append(bloque_actual)
-
-    return bloques
-
-def extraer_codigos(bloques):
-    """
-    Devuelve una lista de códigos postales únicos en orden de aparición.
-    """
-    codigos = []
-    for bloque in bloques:
-        primera_linea = bloque[0]
-        m = re.match(r"^(\d{5}),", primera_linea)
-        if m:
-            cp = m.group(1)
-            if cp not in codigos:
-                codigos.append(cp)
-    return codigos
+    return nuevas
 
 
 def procesar_archivo():
