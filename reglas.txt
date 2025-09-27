@@ -1,4 +1,6 @@
 paseo de las delicias => paseo delicias
+padeo de las delicias => paseo delicias
 diputacion => diputacio
 valle de la cortina => vall de la cortina
 cortes valencianas => corts valencianes
+constitucion => constitucio
