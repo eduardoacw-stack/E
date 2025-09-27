@@ -1,6 +1,17 @@
 # reglas.py
+import unicodedata
+import re
 from pathlib import Path
 from datetime import datetime
+
+
+def normalizar(texto: str) -> str:
+    """Convierte a minúsculas y elimina acentos"""
+    return ''.join(
+        c for c in unicodedata.normalize('NFD', texto.lower())
+        if unicodedata.category(c) != 'Mn'
+    )
+
 
 def cargar_reglas(archivo: Path):
     reglas = []
@@ -13,9 +24,26 @@ def cargar_reglas(archivo: Path):
 
 
 def aplicar_reglas(texto: str, reglas):
-    for origen, destino in reglas:
-        texto = texto.replace(origen, destino)
-    return texto
+    # Dividir en palabras y separadores (espacios, comas, puntos, saltos de línea, etc.)
+    tokens = re.split(r"(\W+)", texto)  
+
+    reglas_norm = [(normalizar(o), d) for o, d in reglas]
+
+    resultado = []
+    for token in tokens:
+        token_norm = normalizar(token)
+        reemplazado = False
+
+        for origen_norm, destino in reglas_norm:
+            if token_norm == origen_norm:
+                resultado.append(destino)
+                reemplazado = True
+                break
+
+        if not reemplazado:
+            resultado.append(token)
+
+    return "".join(resultado)
 
 
 def procesar_reglas():
@@ -39,7 +67,7 @@ def procesar_reglas():
         print("⚠️ No se encontraron reglas en reglas.txt")
         return
 
-    # Aplicar reglas
+    # Aplicar reglas palabra por palabra
     texto_modificado = aplicar_reglas(texto, reglas)
 
     # Guardar resultado
