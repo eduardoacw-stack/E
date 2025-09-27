@@ -28,7 +28,7 @@ def cargar_lista_reemplazos(archivo: Path):
 
 def aplicar_por_palabra(texto: str, reglas):
     """
-    Aplica reemplazos palabra por palabra respetando mayúsculas/acentos.
+    Aplica reemplazos palabra por palabra.
     """
     tokens = re.split(r"(\W+)", texto)  # palabras + separadores
     reglas_norm = [(normalizar(o), d) for o, d in reglas]
@@ -50,11 +50,27 @@ def aplicar_por_palabra(texto: str, reglas):
     return "".join(resultado)
 
 
+def aplicar_por_frase(texto: str, reglas):
+    """
+    Aplica reemplazos de frases completas, insensible a acentos y mayúsculas.
+    """
+    for origen, destino in reglas:
+        # Regex insensible a acentos/mayúsculas
+        patron = re.compile(re.escape(normalizar(origen)), re.IGNORECASE)
+
+        # Buscar en versión normalizada
+        def reemplazo(match):
+            return destino
+
+        texto = re.sub(patron, reemplazo, normalizar(texto))
+    return texto
+
+
 def procesar_reglas():
     carpeta = Path.home() / "storage" / "shared" / "paradas"
     fecha = datetime.now().strftime("%d-%m")
 
-    # Archivos de entrada/salida
+    # Archivos
     input_path = carpeta / f"{fecha}_bloques.txt"
     output_path = carpeta / f"{fecha}_reglas.txt"
 
@@ -68,15 +84,15 @@ def procesar_reglas():
 
     texto = input_path.read_text(encoding="utf-8", errors="ignore")
 
-    # 1️⃣ Correcciones automáticas
+    # 1️⃣ Correcciones automáticas (palabra por palabra)
     correcciones = cargar_lista_reemplazos(correcciones_path)
     if correcciones:
         texto = aplicar_por_palabra(texto, correcciones)
 
-    # 2️⃣ Reglas personalizadas
+    # 2️⃣ Reglas personalizadas (frases completas)
     reglas = cargar_lista_reemplazos(reglas_path)
     if reglas:
-        texto = aplicar_por_palabra(texto, reglas)
+        texto = aplicar_por_frase(texto, reglas)
     else:
         print("⚠️ No se encontraron reglas en reglas.txt")
 
