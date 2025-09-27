@@ -32,7 +32,7 @@ def generar_excel(bloques, output_path: Path):
     wb = Workbook()
     ws = wb.active
     ws.title = "Direcciones"
-    ws.append(["Código postal", "Dirección"])
+    ws.append(["Address Line", "Postcode"])
     for bloque in bloques:
         lineas = [ln for ln in bloque.splitlines() if ln.strip()]
         if len(lineas) >= 2:
