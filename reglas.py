@@ -99,3 +99,12 @@ def procesar_reglas():
     # Guardar resultado
     output_path.write_text(texto, encoding="utf-8")
     print(f"✅ Reglas aplicadas. Archivo generado en: {output_path}")
+
+# 4️⃣ Ejecutar filtrado.py
+    try:
+        import filtrado  # el archivo filtrado.py debe estar en la misma carpeta
+        filtrado.procesar_filtrado()  # esta función se encargará del siguiente paso
+        print("✅ filtrado.py ejecutado correctamente.")
+    except ImportError:
+        print("⚠️ No se encontró filtrado.py o no tiene procesar_filtrado()")
+
