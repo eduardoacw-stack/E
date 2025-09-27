@@ -36,7 +36,7 @@ def generar_excel(bloques, output_path: Path):
     for bloque in bloques:
         lineas = [ln for ln in bloque.splitlines() if ln.strip()]
         if len(lineas) >= 2:
-            ws.append([lineas[0], lineas[1]])
+            ws.append([lineas[1], lineas[0]])
     wb.save(output_path.with_suffix(".xlsx"))
     return output_path.with_suffix(".xlsx")
 
