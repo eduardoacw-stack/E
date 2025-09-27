@@ -75,11 +75,4 @@ def procesar_archivo():
     output_path.write_text(resultado, encoding="utf-8")
     print(f"\n✅ Archivo generado: {output_path}")
 
-    # 4️⃣ Ejecutar filtrado.py
-    try:
-        import filtrado  # el archivo filtrado.py debe estar en la misma carpeta
-        filtrado.procesar_filtrado()  # esta función se encargará del siguiente paso
-        print("✅ filtrado.py ejecutado correctamente.")
-    except ImportError:
-        print("⚠️ No se encontró filtrado.py o no tiene procesar_filtrado()")
-
+    
