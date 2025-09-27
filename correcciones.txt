@@ -1,0 +1,6 @@
+fuentee => fuente
+valenncia => valencia
+benaguazil => benaguasil
+naquerea => naquera
+serraa => serra
+almeriaa => almeria
