@@ -60,43 +60,57 @@ def extraer_codigos(bloques):
 def procesar_archivo():
     carpeta = Path.home() / "storage" / "shared" / "paradas"
     fecha = datetime.now().strftime("%d-%m")
+
     input_path = carpeta / f"{fecha}.txt"
+    output_path = carpeta / f"{fecha}_bloques.txt"
 
     if not input_path.exists():
-        print(f"⚠️ No se encontró archivo: {input_path}")
+        print(f"⚠️ No se encontró archivo de entrada: {input_path}")
         return
 
-    texto = input_path.read_text(encoding="utf-8", errors="ignore")
-    bloques = separar_bloques(texto)
-    print(f"✅ Se detectaron {len(bloques)} bloques.")
+    # Leer líneas del archivo original
+    lineas = input_path.read_text(encoding="utf-8", errors="ignore").splitlines()
 
-    # 1️⃣ Obtener códigos postales únicos
-    codigos = extraer_codigos(bloques)
-    print("\n📌 Códigos postales detectados:")
-    for i, cp in enumerate(codigos, 1):
-        print(f"  {i}. {cp}")
+    # 1️⃣ Limpiar códigos postales
+    lineas = limpiar_codigos_postales(lineas)
 
-    # 2️⃣ Preguntar al usuario
-    seleccion = input("\n👉 Ingresa los códigos postales que quieres mantener (ej: 46118,46180): ")
-    seleccion = [s.strip() for s in seleccion.split(",") if s.strip()]
+    # 2️⃣ Detectar códigos postales únicos
+    codigos = sorted(set([ln.strip() for ln in lineas if re.match(r"^\d{5}$", ln.strip())]))
 
-    # 3️⃣ Filtrar bloques
-    bloques_filtrados = []
-    for bloque in bloques:
-        primera_linea = bloque[0]
-        m = re.match(r"^(\d{5}),", primera_linea)
-        if m and m.group(1) in seleccion:
-            bloques_filtrados.append(bloque)
+    if not codigos:
+        print("⚠️ No se detectaron códigos postales.")
+        return
 
-    print(f"\n✅ Se mantendrán {len(bloques_filtrados)} bloques tras el filtrado.")
+    print("\n📍 Códigos postales detectados:")
+    for i, cp in enumerate(codigos, start=1):
+        print(f"{i}. {cp}")
 
-    # 4️⃣ Guardar resultado en archivo
-    output_path = carpeta / f"{fecha}_bloques.txt"
-    with open(output_path, "w", encoding="utf-8") as f:
-        for i, b in enumerate(bloques_filtrados, 1):
-            f.write(f"=== Bloque {i} ===\n")
-            for l in b:
-                f.write(l + "\n")
-            f.write("\n")
+    seleccion = input("\n👉 Ingrese los números de los códigos a conservar (ejemplo: 1,3): ").strip()
+    if not seleccion:
+        print("⚠️ No seleccionaste ningún código postal. Se guardará vacío.")
+        seleccionados = []
+    else:
+        indices = [int(x.strip()) for x in seleccion.split(",") if x.strip().isdigit()]
+        seleccionados = [codigos[i - 1] for i in indices if 0 < i <= len(codigos)]
 
-    print(f"📂 Archivo generado en: {output_path}")
+    # 3️⃣ Filtrar bloques por CP seleccionado
+    bloques = []
+    i = 0
+    while i < len(lineas):
+        ln = lineas[i].strip()
+        if re.match(r"^\d{5}$", ln):  # línea con solo el CP
+            cp = ln
+            bloque = [cp]
+            i += 1
+            while i < len(lineas) and not re.match(r"^\d{5}$", lineas[i].strip()):
+                bloque.append(lineas[i])
+                i += 1
+            if cp in seleccionados:
+                bloques.append("\n".join(bloque))
+        else:
+            i += 1
+
+    # Guardar archivo final
+    resultado = "\n\n".join(bloques)
+    output_path.write_text(resultado, encoding="utf-8")
+    print(f"\n✅ Archivo generado: {output_path}")
