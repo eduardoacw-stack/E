@@ -28,12 +28,16 @@ Pol. Ind. Els Vents
 Cl.
 Poligono Industrial els Vents
 La Torre de Portacoeli
-
-
-
-
-
-
+.
+,
+anizacion
+bonanza
+torre porta-coeli
+(se puede dejar en la garita del vigilante)
+n°
+casa
+dejar en seguridad en la entrada a la anizacion.
+pol ind los vientos
 
 
 
