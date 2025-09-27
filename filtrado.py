@@ -8,7 +8,7 @@ def procesar_filtrado():
     fecha = datetime.now().strftime("%d-%m")
 
     # Archivo que viene de reglas.py
-    input_path = carpeta / f"{fecha}_bloques.txt"
+    input_path = carpeta / f"{fecha}_reglas.txt"
     output_path = carpeta / f"{fecha}_filtrado.txt"
 
     if not input_path.exists():
