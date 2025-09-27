@@ -27,6 +27,20 @@ def separar_bloques(texto):
 
     return bloques
 
+def limpiar_codigos_postales(texto: str) -> str:
+    """
+    Deja solo el número de los códigos postales (ej: '46119, Naquera' -> '46119').
+    """
+    lineas = texto.splitlines()
+    nuevas = []
+    for ln in lineas:
+        m = re.match(r"^(\d{5}),", ln.strip())
+        if m:
+            nuevas.append(m.group(1))  # solo el número
+        else:
+            nuevas.append(ln)
+    return "\n".join(nuevas)
+
 
 def extraer_codigos(bloques):
     """
