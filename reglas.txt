@@ -9,4 +9,5 @@ sauces18 => sauces 18
 miquel romeu => mestre tallista miquel romeu
 senda de la ermita => senda de i'Ermita 1
 maria torrent => mariano torrent
-maestro lucio ramon damian => mt lucio damian 
+maestro lucio ramon damia¡n => mt lucio damian 
+fuente del oro => font de lor
