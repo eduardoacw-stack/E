@@ -13,7 +13,10 @@ def normalizar(texto: str) -> str:
     )
 
 
-def cargar_reglas(archivo: Path):
+def cargar_lista_reemplazos(archivo: Path):
+    """
+    Carga archivo de reemplazos (formato: origen => destino).
+    """
     reglas = []
     if archivo.exists():
         for linea in archivo.read_text(encoding="utf-8").splitlines():
@@ -23,10 +26,11 @@ def cargar_reglas(archivo: Path):
     return reglas
 
 
-def aplicar_reglas(texto: str, reglas):
-    # Dividir en palabras y separadores (espacios, comas, puntos, saltos de línea, etc.)
-    tokens = re.split(r"(\W+)", texto)  
-
+def aplicar_por_palabra(texto: str, reglas):
+    """
+    Aplica reemplazos palabra por palabra respetando mayúsculas/acentos.
+    """
+    tokens = re.split(r"(\W+)", texto)  # palabras + separadores
     reglas_norm = [(normalizar(o), d) for o, d in reglas]
 
     resultado = []
@@ -50,26 +54,32 @@ def procesar_reglas():
     carpeta = Path.home() / "storage" / "shared" / "paradas"
     fecha = datetime.now().strftime("%d-%m")
 
-    # Archivo de entrada: lo que generó separacion_bloques.py
+    # Archivos de entrada/salida
     input_path = carpeta / f"{fecha}_bloques.txt"
     output_path = carpeta / f"{fecha}_reglas.txt"
-    reglas_path = Path(__file__).parent / "reglas.txt"
+
+    base = Path(__file__).parent
+    correcciones_path = base / "correcciones.txt"
+    reglas_path = base / "reglas.txt"
 
     if not input_path.exists():
         print(f"⚠️ No se encontró archivo de entrada: {input_path}")
         return
 
-    # Cargar texto y reglas
     texto = input_path.read_text(encoding="utf-8", errors="ignore")
-    reglas = cargar_reglas(reglas_path)
 
-    if not reglas:
+    # 1️⃣ Correcciones automáticas
+    correcciones = cargar_lista_reemplazos(correcciones_path)
+    if correcciones:
+        texto = aplicar_por_palabra(texto, correcciones)
+
+    # 2️⃣ Reglas personalizadas
+    reglas = cargar_lista_reemplazos(reglas_path)
+    if reglas:
+        texto = aplicar_por_palabra(texto, reglas)
+    else:
         print("⚠️ No se encontraron reglas en reglas.txt")
-        return
-
-    # Aplicar reglas palabra por palabra
-    texto_modificado = aplicar_reglas(texto, reglas)
 
     # Guardar resultado
-    output_path.write_text(texto_modificado, encoding="utf-8")
+    output_path.write_text(texto, encoding="utf-8")
     print(f"✅ Reglas aplicadas. Archivo generado en: {output_path}")
