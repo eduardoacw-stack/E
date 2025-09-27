@@ -37,18 +37,7 @@ def procesar_filtrado():
         if len(bloque) >= 2:
             bloques_reducidos.append("\n".join(bloque[:2]))
 
-    # Unir bloques reducidos a texto
-    texto = "\n\n".join(bloques_reducidos)
-
-    # 1️⃣ Cargar palabras a borrar
-    palabras_path = Path(__file__).parent / "palabras.txt"
-    palabras_a_borrar = cargar_palabras(palabras_path)
-
-    # 2️⃣ Borrar las palabras indicadas
-    if palabras_a_borrar:
-        texto = borrar_palabras(texto, palabras_a_borrar)
-
-    # Cargar lista de palabras a borrar
+        # Cargar lista de palabras a borrar
 def cargar_palabras(path_palabras):
     """
     Carga palabras desde un archivo, una palabra por línea.
@@ -78,7 +67,18 @@ def borrar_palabras(texto, palabras):
         resultado.append(nueva_linea.strip())
     return "\n".join(resultado)
 
+    # Unir bloques reducidos a texto
+    texto = "\n\n".join(bloques_reducidos)
+
+    # 1️⃣ Cargar palabras a borrar
+    palabras_path = Path(__file__).parent / "palabras.txt"
+    palabras_a_borrar = cargar_palabras(palabras_path)
+
+    # 2️⃣ Borrar las palabras indicadas
+    if palabras_a_borrar:
+        texto = borrar_palabras(texto, palabras_a_borrar)
+
     # Guardar resultado
     resultado = "\n\n".join(bloques_reducidos)
-    output_path.write_text(resultado, encoding="utf-8")
-    print(f"✅ Archivo filtrado generado: {output_path}")
+    output_path.write_text(texto, encoding="utf-8")
+    print(f"✅ Archivo filtrado y palabras borradas generado: {output_path}")
